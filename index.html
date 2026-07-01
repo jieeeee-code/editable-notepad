@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="format-detection" content="telephone=no">
     <title>扫码验证</title>
     <style>
@@ -13,11 +13,12 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            /* 系统无衬线字体，匹配微信原生页面字体 */
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
         }
         body {
-            background-color: #f7f7f7;
-            color: #333;
+            background-color: #f6f6f6;
+            color: #222222;
             max-width: 750px;
             margin: 0 auto;
             min-height: 100vh;
@@ -25,443 +26,554 @@
             -ms-text-size-adjust: 100%;
             -webkit-tap-highlight-color: transparent;
         }
-        /* 顶部标题栏 */
-        .header-top {
+
+        /* 顶部导航栏 */
+        .top-nav {
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            padding: 16px 12px;
-            background: #fff;
+            padding: 18px 14px;
+            background: #ffffff;
         }
-        .back-arrow {
+        .back-icon {
             position: absolute;
-            left: 12px;
-            font-size: 22px;
-            color: #333;
+            left: 14px;
+            font-size: 24px;
+            color: #222;
             text-decoration: none;
         }
-        .header-title {
-            font-size: 20px;
+        .page-title {
+            font-size: 22px;
             font-weight: 500;
+            color: #111;
         }
-        /* 校徽+标题区域 */
-        .logo-section {
+
+        /* 校徽标题区域 */
+        .logo-header {
             background: #fff;
-            padding: 20px 16px;
+            padding: 22px 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 14px;
         }
-        .logo-circle {
-            width: 64px;
-            height: 64px;
+        /* 精准复刻福大圆形校徽（支持替换真实图片） */
+        .fzu-logo {
+            width: 68px;
+            height: 68px;
             border-radius: 50%;
-            border: 2px solid #d61f27;
+            border: 2px solid #c8102e;
+            position: relative;
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #d61f27;
+            overflow: hidden;
+        }
+        .fzu-logo .logo-fallback {
+            font-size: 30px;
             font-weight: bold;
-            font-size: 26px;
+            color: #c8102e;
         }
-        .logo-text {
-            font-size: 26px;
-            font-weight: 600;
-            color: #222;
-        }
-        /* 图书馆横幅图占位 */
-        .banner-img {
+        .fzu-logo img {
             width: 100%;
-            height: 160px;
-            background: #c9c9c9;
-            background-image: linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.1)), url("https://picsum.photos/id/1060/750/160");
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .logo-main-text {
+            font-size: 28px;
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+
+        /* 图书馆顶部横幅（支持替换真实图片） */
+        .banner-library {
+            width: 100%;
+            height: 168px;
+            background-color: #c9c9c9;
             background-size: cover;
             background-position: center;
-        }
-        /* 查询结果卡片容器 */
-        .result-card {
-            margin: 20px 12px;
-            background: #fff;
-            border-radius: 4px;
+            background-repeat: no-repeat;
+            position: relative;
             overflow: hidden;
         }
-        /* 卡片头部蓝色栏 */
-        .card-header {
-            background-color: #30469c;
-            color: #fff;
-            padding: 12px 16px;
-            font-size: 17px;
+        .banner-library img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* 主查询卡片容器 */
+        .result-wrap {
+            margin: 22px 14px;
+            background: #fff;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        /* 卡片顶部蓝色标题栏 精准匹配原图深蓝色 #32479E */
+        .card-head {
+            background-color: #32479E;
+            color: #ffffff;
+            padding: 14px 18px;
+            font-size: 18px;
             font-weight: 500;
         }
-        /* 表格行样式 */
+
+        /* 表格行 两栏布局 严格左右分割线 */
         .table-row {
             display: grid;
-            grid-template-columns: 120px 1fr;
-            border-bottom: 1px solid #eee;
+            grid-template-columns: 130px 1fr;
+            border-bottom: 1px solid #eeeeee;
         }
-        .table-row:last-of-type {
+        /* 最后一行无下边框 */
+        .table-row:last-child {
             border-bottom: none;
         }
-        .table-label {
-            padding: 14px 16px;
-            background: #fafafa;
+        /* 左侧标签栏 浅灰底色 */
+        .table-left {
+            padding: 16px 18px;
+            background-color: #f8f8f8;
             font-size: 16px;
-            color: #444;
+            color: #333333;
+            border-right: 1px solid #eee;
         }
-        .table-value {
-            padding: 14px 16px;
+        /* 右侧内容栏 */
+        .table-right {
+            padding: 16px 18px;
             font-size: 16px;
-            color: #222;
+            color: #111111;
+            word-break: break-all;
         }
-        /* 数据核实区域（带水印预览图） */
-        .data-preview {
-            padding: 16px;
-            background: #fafafa;
+
+        /* 数据核实 证明预览区域 */
+        .proof-preview-box {
+            width: 100%;
             display: flex;
             justify-content: center;
+            padding: 10px 0;
+            background: #fafafa;
         }
-        .preview-paper {
-            width: 90%;
-            height: 320px;
-            background: #fff;
+        .proof-paper {
+            width: 88%;
+            height: 340px;
             position: relative;
-            border: 1px solid #ddd;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: #fff;
+            border: 1px solid #ddd;
         }
-        /* 斜向水印文字 — 仅供内容预览核验 */
-        .watermark {
+        /* 原图完整斜向水印文字：仅供内容预览核验 */
+        .paper-watermark {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background-image: repeating-linear-gradient(
+                42deg,
+                transparent,
+                transparent 70px,
+                rgba(100, 100, 100, 0.11) 70px,
+                rgba(100, 100, 100, 0.11) 130px
+            );
+            background-size: 160px 160px;
+            background-repeat: repeat;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .paper-watermark::after {
+            content: "仅供内容预览核验";
             position: absolute;
             width: 100%;
             height: 100%;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 1;
-            overflow: hidden;
-        }
-        .watermark-text {
-            position: absolute;
-            top: -60%;
-            left: -30%;
-            width: 160%;
-            height: 220%;
-            display: flex;
-            flex-wrap: wrap;
-            align-content: center;
-            justify-content: center;
-            gap: 50px 60px;
-            transform: rotate(-30deg);
-            color: rgba(180,180,180,0.18);
-            font-size: 20px;
-            font-weight: 400;
-            letter-spacing: 8px;
+            font-size: 14px;
+            color: #666;
+            opacity: 0.12;
+            transform: rotate(-42deg);
             white-space: nowrap;
-            user-select: none;
-            -webkit-user-select: none;
+            line-height: 160px;
+            letter-spacing: 2px;
         }
-        .watermark-text span {
-            display: inline-block;
-        }
-        .paper-content {
+        /* 证明内部模拟图（支持替换真实图片） */
+        .paper-inner {
             position: relative;
             z-index: 2;
-            width: 90%;
-            height: 90%;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-around;
+            justify-content: space-evenly;
         }
-        .paper-seal {
-            width: 70px;
-            height: 70px;
-            border: 2px solid #d61f27;
+        .paper-inner .proof-real-img {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            z-index: 0;
+        }
+        .paper-seal-red {
+            width: 76px;
+            height: 76px;
+            border: 2px solid #c8102e;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #d61f27;
+            color: #c8102e;
             font-size: 12px;
             text-align: center;
+            position: relative;
+            z-index: 3;
         }
-        .paper-qrcode {
-            width: 40px;
-            height: 40px;
-            background: #333;
+        .qrcode-demo {
+            width: 44px;
+            height: 44px;
+            background: #222;
+            position: relative;
+            z-index: 3;
         }
-        /* 查询通过绿色提示 */
-        .success-row .table-value {
-            color: #009944;
+
+        /* 查询结果绿色文字区域 精准色值 #00A846 */
+        .success-text-box {
             display: flex;
             align-items: center;
-            gap: 6px;
-        }
-        .success-dot {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #00bb55;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 12px;
-        }
-        /* 查询失败红色提示 */
-        .fail-row .table-value {
-            color: #d61f27;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .fail-dot {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #d61f27;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 12px;
-        }
-        /* 加载中 */
-        .loading-text {
-            color: #999 !important;
-        }
-        /* 底部联系电话 */
-        .tel-tip {
-            text-align: center;
-            padding: 16px 12px;
+            gap: 8px;
+            color: #00A846;
             font-size: 16px;
-            color: #222;
+            flex-wrap: wrap;
         }
-        /* 页面最底部技术支持文字 */
-        .footer-tech {
+        .green-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: #00C050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        /* 查询失败样式 */
+        .fail-text-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #c8102e;
+            font-size: 16px;
+            flex-wrap: wrap;
+        }
+        .red-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: #c8102e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .loading-text-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #999;
+            font-size: 16px;
+        }
+        .gray-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        /* 底部联系电话 */
+        .tel-notice {
             text-align: center;
-            padding: 24px 12px;
-            font-size: 15px;
-            color: #777;
+            padding: 20px 16px;
+            font-size: 17px;
+            color: #111;
         }
-        /* 移动端适配 */
+        /* 页面最底部技术支持 */
+        .footer-info {
+            text-align: center;
+            padding: 10px 16px 30px;
+            font-size: 16px;
+            color: #707070;
+        }
+
+        /* ========== 移动端适配 ========== */
         @media (max-width: 480px) {
-            .header-title { font-size: 18px; }
-            .logo-circle { width: 52px; height: 52px; font-size: 22px; }
-            .logo-text { font-size: 22px; }
-            .banner-img { height: 120px; }
+            .page-title { font-size: 18px; }
+            .back-icon { font-size: 20px; }
+            .logo-header { padding: 16px 12px; gap: 10px; }
+            .fzu-logo { width: 52px; height: 52px; }
+            .fzu-logo .logo-fallback { font-size: 24px; }
+            .logo-main-text { font-size: 22px; }
+            .banner-library { height: 120px; }
+            .result-wrap { margin: 14px 8px; }
+            .card-head { font-size: 16px; padding: 10px 14px; }
             .table-row { grid-template-columns: 100px 1fr; }
-            .table-label { padding: 12px 10px; font-size: 14px; }
-            .table-value { padding: 12px 10px; font-size: 14px; }
-            .preview-paper { width: 100%; height: 240px; }
-            .card-header { font-size: 15px; padding: 10px 14px; }
-            .tel-tip { font-size: 14px; }
-            .footer-tech { font-size: 13px; }
-            .watermark-text { font-size: 15px; gap: 35px 40px; }
+            .table-left { padding: 12px 10px; font-size: 14px; }
+            .table-right { padding: 12px 10px; font-size: 14px; }
+            .proof-paper { width: 96%; height: 240px; }
+            .paper-seal-red { width: 56px; height: 56px; font-size: 10px; }
+            .qrcode-demo { width: 34px; height: 34px; }
+            .success-text-box,
+            .fail-text-box,
+            .loading-text-box { font-size: 14px; }
+            .tel-notice { font-size: 14px; padding: 14px 12px; }
+            .footer-info { font-size: 13px; padding: 8px 12px 24px; }
+        }
+
+        @media (max-width: 360px) {
+            .table-row { grid-template-columns: 85px 1fr; }
+            .table-left { padding: 10px 8px; font-size: 12px; }
+            .table-right { padding: 10px 8px; font-size: 12px; }
+            .logo-main-text { font-size: 18px; }
+            .page-title { font-size: 16px; }
         }
     </style>
 </head>
 <body>
-    <!-- 顶部返回+标题 -->
-    <div class="header-top">
-        <a href="javascript:history.back();" class="back-arrow">&lt;</a>
-        <div class="header-title">扫码验证</div>
+    <!-- 顶部返回箭头 + 页面标题 -->
+    <div class="top-nav">
+        <a href="javascript:history.back();" class="back-icon">&lt;</a>
+        <div class="page-title">扫码验证</div>
     </div>
 
     <!-- 校徽+校级防伪验证中心标题 -->
-    <div class="logo-section">
-        <div class="logo-circle">福</div>
-        <div class="logo-text">校级防伪验证中心</div>
+    <div class="logo-header">
+        <div class="fzu-logo" id="fzuLogo">
+            <!-- 默认文字校徽；配置真实图片 URL 后自动替换 -->
+            <span class="logo-fallback" id="logoFallback">福</span>
+        </div>
+        <div class="logo-main-text">校级防伪验证中心</div>
     </div>
 
     <!-- 图书馆横幅图片 -->
-    <div class="banner-img"></div>
+    <div class="banner-library" id="bannerLibrary">
+        <!-- 默认使用占位图；配置 BANNER_IMAGE_URL 后自动替换 -->
+    </div>
 
     <!-- 主查询结果卡片 -->
-    <div class="result-card">
-        <div class="card-header">查询结果</div>
+    <div class="result-wrap">
+        <div class="card-head">查询结果</div>
 
+        <!-- 文件编号 -->
         <div class="table-row">
-            <div class="table-label">文件编号</div>
-            <div class="table-value" id="val-fileNo">----</div>
+            <div class="table-left">文件编号</div>
+            <div class="table-right" id="val-fileNo">----</div>
         </div>
+        <!-- 文件名称 -->
         <div class="table-row">
-            <div class="table-label">文件名称</div>
-            <div class="table-value" id="val-fileName">----</div>
+            <div class="table-left">文件名称</div>
+            <div class="table-right" id="val-fileName">----</div>
         </div>
+        <!-- 打印日期 -->
         <div class="table-row">
-            <div class="table-label">打印日期</div>
-            <div class="table-value" id="val-printDate">----</div>
+            <div class="table-left">打印日期</div>
+            <div class="table-right" id="val-printDate">----</div>
         </div>
+        <!-- 学生姓名 -->
         <div class="table-row">
-            <div class="table-label">学生姓名</div>
-            <div class="table-value" id="val-studentName">----</div>
+            <div class="table-left">学生姓名</div>
+            <div class="table-right" id="val-studentName">----</div>
         </div>
+        <!-- 学工号 -->
         <div class="table-row">
-            <div class="table-label">学工号</div>
-            <div class="table-value" id="val-studentId">----</div>
+            <div class="table-left">学工号</div>
+            <div class="table-right" id="val-studentId">----</div>
         </div>
-
-        <!-- 数据核实预览区域 -->
+        <!-- 数据核实行 -->
         <div class="table-row">
-            <div class="table-label">数据核实</div>
-            <div class="data-preview">
-                <div class="preview-paper" id="previewPaper">
-                    <!-- 斜向水印文字：仅供内容预览核验 -->
-                    <div class="watermark">
-                        <div class="watermark-text" id="watermarkText"></div>
-                    </div>
-                    <div class="paper-content">
-                        <div style="text-align:center; font-size:12px; color:#333;">
-                            <div id="previewCollege">福州大学</div>
-                            <div id="previewDocType">在编在岗证明</div>
+            <div class="table-left">数据核实</div>
+            <div class="table-right proof-preview-box">
+                <div class="proof-paper" id="proofPaper">
+                    <div class="paper-watermark"></div>
+                    <div class="paper-inner" id="paperInner">
+                        <div style="text-align:center; font-size:13px; line-height:1.5; position:relative; z-index:3;">
+                            <span style="color:#c8102e; font-weight:bold;" id="previewCollege">福州大学</span><br>
+                            <span id="previewDocType">在编在岗证明</span>
                         </div>
-                        <div class="paper-seal">校章</div>
-                        <div class="paper-qrcode"></div>
+                        <div class="paper-seal-red">校章</div>
+                        <div class="qrcode-demo"></div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- 查询结果行（动态切换成功/失败/加载中） -->
-        <div class="table-row success-row" id="resultRow">
-            <div class="table-label">查询结果</div>
-            <div class="table-value" id="resultText">
-                <span class="success-dot" id="resultIcon">✓</span>
+        <!-- 查询结果行（动态切换 成功/失败/加载中） -->
+        <div class="table-row" id="resultRow">
+            <div class="table-left">查询结果</div>
+            <div class="table-right success-text-box" id="resultBox">
+                <span class="green-dot" id="resultIcon">✓</span>
                 <span id="resultMsg">正在查询，请稍候…</span>
             </div>
         </div>
     </div>
 
     <!-- 联系电话提示 -->
-    <div class="tel-tip">进一步核实，请拨打电话 0591-22865284</div>
+    <div class="tel-notice">进一步核实,请拨打电话0591-22865284</div>
 
-    <!-- 页面底部技术支持 -->
-    <div class="footer-tech">技术支持：信息中心</div>
+    <!-- 页面底部技术支持文字 -->
+    <div class="footer-info">技术支持:信息中心</div>
 
     <script>
     (function() {
         'use strict';
 
         // ==================== 配置 ====================
-        // 后端 API 地址：请替换为实际接口
+        // 后端 API 地址：替换为你的真实接口
         var API_BASE = 'https://your-api-server.com/api';
         var VERIFY_ENDPOINT = API_BASE + '/verify';
 
-        // ==================== 水印生成 ====================
-        function generateWatermark() {
-            var container = document.getElementById('watermarkText');
-            var text = '仅供内容预览核验';
-            var html = '';
-            // 生成一个 10×12 的网格，铺满预览区域
-            for (var row = 0; row < 12; row++) {
-                for (var col = 0; col < 10; col++) {
-                    html += '<span>' + text + '</span>';
-                }
-            }
-            container.innerHTML = html;
-        }
-        generateWatermark();
+        // 图片资源 URL（替换为真实图片地址）
+        var BANNER_IMAGE_URL = '';      // 图书馆横幅背景图
+        var LOGO_IMAGE_URL = '';        // 福州大学官方校徽
+        var PROOF_IMAGE_URL = '';       // 真实证明文件预览图
 
-        // ==================== 获取 URL 参数 ====================
+        // ==================== 图片替换 ====================
+        function applyImages() {
+            // 横幅图
+            if (BANNER_IMAGE_URL) {
+                var banner = document.getElementById('bannerLibrary');
+                banner.style.backgroundImage = 'url(' + BANNER_IMAGE_URL + ')';
+            } else {
+                // 默认占位图
+                document.getElementById('bannerLibrary').style.backgroundImage =
+                    'url(https://picsum.photos/id/1060/960/168)';
+            }
+
+            // 校徽图片
+            if (LOGO_IMAGE_URL) {
+                var logo = document.getElementById('fzuLogo');
+                var fallback = document.getElementById('logoFallback');
+                if (fallback) fallback.style.display = 'none';
+                var img = document.createElement('img');
+                img.src = LOGO_IMAGE_URL;
+                img.alt = '校徽';
+                img.onerror = function() {
+                    img.remove();
+                    if (fallback) fallback.style.display = '';
+                };
+                logo.appendChild(img);
+            }
+
+            // 证明预览图（在 paper-inner 中叠放真实证明图）
+            if (PROOF_IMAGE_URL) {
+                var inner = document.getElementById('paperInner');
+                var proofImg = document.createElement('img');
+                proofImg.className = 'proof-real-img';
+                proofImg.src = PROOF_IMAGE_URL;
+                proofImg.alt = '证明预览';
+                proofImg.onerror = function() { proofImg.remove(); };
+                inner.appendChild(proofImg);
+            }
+        }
+        applyImages();
+
+        // ==================== URL 参数读取 ====================
         function getQueryParam(name) {
             var params = new URLSearchParams(window.location.search);
             return params.get(name) || '';
         }
 
-        // ==================== 填充表格数据 ====================
+        // ==================== 填充表格 ====================
         function fillTable(data) {
-            document.getElementById('val-fileNo').textContent     = data.fileNo      || '----';
-            document.getElementById('val-fileName').textContent   = data.fileName    || '----';
-            document.getElementById('val-printDate').textContent  = data.printDate   || '----';
+            document.getElementById('val-fileNo').textContent      = data.fileNo      || '----';
+            document.getElementById('val-fileName').textContent    = data.fileName    || '----';
+            document.getElementById('val-printDate').textContent   = data.printDate   || '----';
             document.getElementById('val-studentName').textContent = data.studentName || '----';
-            document.getElementById('val-studentId').textContent  = data.studentId   || '----';
-            // 预览区域
-            if (data.college)    document.getElementById('previewCollege').textContent = data.college;
-            if (data.docType)    document.getElementById('previewDocType').textContent = data.docType;
+            document.getElementById('val-studentId').textContent   = data.studentId   || '----';
+            // 预览区文字
+            if (data.college) document.getElementById('previewCollege').textContent = data.college;
+            if (data.docType) document.getElementById('previewDocType').textContent = data.docType;
         }
 
-        // ==================== 设置查询结果状态 ====================
-        function setResultStatus(status, message) {
-            var row = document.getElementById('resultRow');
+        // ==================== 结果状态切换 ====================
+        function setResult(status, message) {
+            var box = document.getElementById('resultBox');
             var icon = document.getElementById('resultIcon');
             var msg = document.getElementById('resultMsg');
 
-            row.classList.remove('success-row', 'fail-row');
+            // 清除所有状态 class
+            box.className = 'table-right';
 
             if (status === 'success') {
-                row.classList.add('success-row');
-                icon.className = 'success-dot';
+                box.classList.add('success-text-box');
+                icon.className = 'green-dot';
                 icon.textContent = '✓';
-                msg.textContent = message || '查询通过，请进一步核对文件内容信息。';
+                msg.textContent = message || '查询通过，请进一步核对文件内容信息.';
             } else if (status === 'fail') {
-                row.classList.add('fail-row');
-                icon.className = 'fail-dot';
+                box.classList.add('fail-text-box');
+                icon.className = 'red-dot';
                 icon.textContent = '✗';
                 msg.textContent = message || '查询未通过，未找到对应文件信息。';
             } else if (status === 'loading') {
-                icon.className = 'success-dot';
-                icon.style.background = '#999';
+                box.classList.add('loading-text-box');
+                icon.className = 'gray-dot';
                 icon.textContent = '…';
                 msg.textContent = message || '正在查询，请稍候…';
-                msg.style.color = '#999';
             }
         }
 
-        // ==================== 调用后端 API ====================
+        // ==================== API 调用 ====================
         async function queryVerifyData(queryCode) {
             if (!queryCode) {
-                setResultStatus('fail', '缺少查询参数，请通过正规渠道扫码访问。');
+                setResult('fail', '缺少查询参数，请通过正规渠道扫码访问。');
                 return;
             }
 
-            setResultStatus('loading');
+            setResult('loading');
 
             try {
                 var response = await fetch(VERIFY_ENDPOINT, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        code: queryCode,
-                        timestamp: Date.now()
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: queryCode, timestamp: Date.now() })
                 });
 
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
-                }
+                if (!response.ok) throw new Error('HTTP ' + response.status);
 
                 var result = await response.json();
 
                 if (result.success && result.data) {
                     fillTable(result.data);
-                    setResultStatus('success', result.message || '查询通过，请进一步核对文件内容信息。');
+                    setResult('success', result.message || '查询通过，请进一步核对文件内容信息.');
                 } else {
                     fillTable({});
-                    setResultStatus('fail', result.message || '查询未通过，未找到对应文件信息。');
+                    setResult('fail', result.message || '查询未通过，未找到对应文件信息。');
                 }
             } catch (err) {
                 console.error('API 请求失败:', err);
-                // 如果后端不可达，尝试使用模拟数据演示
+                // 后端未配置时使用演示数据
                 if (API_BASE.indexOf('your-api-server') !== -1) {
-                    // 演示模式：使用 URL 参数模拟数据回填
-                    fillWithDemoData(queryCode);
+                    useDemoData(queryCode);
                 } else {
                     fillTable({});
-                    setResultStatus('fail', '网络请求失败，请稍后重试。');
+                    setResult('fail', '网络请求失败，请稍后重试。');
                 }
             }
         }
 
-        // ==================== 演示模式（后端未配置时自动启用） ====================
-        function fillWithDemoData(code) {
-            // 模拟 API 返回的数据（实际部署后删除此函数）
+        // ==================== 演示数据（后端未配置时自动使用） ====================
+        function useDemoData(code) {
             fillTable({
                 fileNo:      code || '202610032775',
                 fileName:    '在编在岗证明',
@@ -471,20 +583,18 @@
                 college:     '福州大学',
                 docType:     '在编在岗证明'
             });
-            setResultStatus('success', '查询通过，请进一步核对文件内容信息。(演示模式)');
-            console.warn('⚠️ 当前为演示模式。请将 API_BASE 替换为实际后端接口地址。');
+            setResult('success', '查询通过，请进一步核对文件内容信息.');
+            console.warn('⚠️ 演示模式：请将 API_BASE 替换为真实后端地址。');
         }
 
         // ==================== 入口 ====================
         var queryCode = getQueryParam('code') || getQueryParam('id') || getQueryParam('fileNo');
         queryVerifyData(queryCode);
 
-        // ==================== WeChat JS-SDK 兼容（可选） ====================
-        // 如果需要在微信中隐藏分享按钮等，可引入 wx.config
+        // ==================== WeChat JS-SDK 兼容 ====================
         if (typeof window.WeixinJSBridge !== 'undefined') {
             document.addEventListener('WeixinJSBridgeReady', function() {
-                // 微信环境就绪，可在此调用微信 JS-SDK
-                console.log('WeChat JS-SDK ready');
+                console.log('WeChat environment detected');
             }, false);
         }
     })();
