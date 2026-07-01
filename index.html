@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📝 可编辑记事本</title>
+    <style>
+        :root {
+            --bg: #faf9f6; --surface: #fff; --text: #2c2c2c;
+            --text-light: #888; --border: #e8e5df; --accent: #4a90d9;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06); --radius: 8px;
+            --green: #4caf50; --warn: #f0ad4e;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+            background:var(--bg);color:var(--text);
+            min-height:100vh;display:flex;justify-content:center;padding:24px;
+        }
+        .container{width:100%;max-width:740px;display:flex;flex-direction:column;gap:16px}
+
+        /* Toolbar */
+        .toolbar{
+            display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;
+            background:var(--surface);border:1px solid var(--border);
+            border-radius:var(--radius);box-shadow:var(--shadow);
+            position:sticky;top:16px;z-index:10;
+        }
+        .toolbar button{
+            width:36px;height:36px;border:1px solid var(--border);
+            border-radius:6px;background:var(--surface);cursor:pointer;
+            font-size:14px;color:var(--text);
+            display:flex;align-items:center;justify-content:center;transition:all 0.15s;
+        }
+        .toolbar button:hover{background:#f0ede6;border-color:#ccc}
+        .toolbar button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+        .toolbar .sep{width:1px;background:var(--border);margin:4px 6px}
+        .toolbar select{
+            height:36px;border:1px solid var(--border);border-radius:6px;
+            padding:0 8px;font-size:13px;background:var(--surface);cursor:pointer;color:var(--text);
+        }
+
+        /* Title */
+        .title-input{
+            width:100%;font-size:28px;font-weight:700;border:none;
+            background:transparent;color:var(--text);padding:8px 4px;
+            outline:none;font-family:inherit;letter-spacing:-0.3px;
+        }
+        .title-input::placeholder{color:#ccc}
+
+        /* Editor */
+        .editor-wrapper{
+            background:var(--surface);border:1px solid var(--border);
+            border-radius:var(--radius);box-shadow:var(--shadow);
+            flex:1;display:flex;flex-direction:column;
+        }
+        .editor{
+            flex:1;min-height:420px;padding:24px 28px;font-size:16px;
+            line-height:1.8;outline:none;border-radius:var(--radius);word-break:break-word;
+        }
+        .editor:empty::before{content:'在这里开始写字…';color:#ccc;pointer-events:none}
+        .editor:focus{box-shadow:inset 0 0 0 2px var(--accent)}
+
+        /* Status bar */
+        .status-bar{
+            display:flex;justify-content:space-between;align-items:center;
+            padding:8px 16px;font-size:12px;color:var(--text-light);border-top:1px solid var(--border);
+        }
+        .save-indicator{color:var(--green);opacity:0;transition:opacity 0.3s}
+        .save-indicator.show{opacity:1}
+
+        /* QR Section */
+        .qr-section{
+            background:var(--surface);border:1px solid var(--border);
+            border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;
+        }
+        .qr-section h3{font-size:16px;margin-bottom:14px}
+        .qr-codes{display:flex;gap:24px;flex-wrap:wrap}
+        .qr-card{
+            flex:1;min-width:200px;background:#fafaf8;
+            border:1px solid var(--border);border-radius:var(--radius);
+            padding:16px;text-align:center;
+        }
+        .qr-card.public{border-color:var(--accent);background:#f5f8fc}
+        .qr-card h4{font-size:14px;margin-bottom:2px}
+        .qr-card .tag{
+            display:inline-block;font-size:11px;padding:2px 8px;
+            border-radius:10px;margin-bottom:10px;
+        }
+        .tag.public-tag{background:#e8f0fb;color:var(--accent)}
+        .tag.local-tag{background:#f0ede6;color:#888}
+        .qr-card canvas,.qr-card img{display:block;margin:0 auto}
+        .qr-card canvas{image-rendering:pixelated}
+        .qr-card .url-box{
+            margin-top:10px;font-size:12px;color:var(--text-light);
+            word-break:break-all;
+        }
+        .qr-card .url-box code{
+            display:block;background:#f0ede6;padding:4px 8px;
+            border-radius:4px;font-size:11px;margin-top:4px;user-select:all;
+        }
+        .qr-card .copy-btn{
+            margin-top:8px;padding:4px 14px;font-size:12px;
+            border:1px solid var(--border);border-radius:4px;
+            background:var(--surface);cursor:pointer;transition:all 0.15s;
+        }
+        .qr-card .copy-btn:hover{background:#f0ede6}
+        .qr-note{
+            margin-top:12px;font-size:12px;color:var(--text-light);
+            padding:8px 12px;background:#fffbf0;border-radius:6px;
+            border-left:3px solid var(--warn);
+        }
+
+        @media(max-width:600px){
+            body{padding:12px}
+            .toolbar{gap:4px;padding:8px 10px}
+            .toolbar button{width:32px;height:32px;font-size:12px}
+            .editor{padding:16px;font-size:15px}
+            .qr-codes{flex-direction:column}
+        }
+        @media print{
+            .toolbar,.qr-section,.status-bar{display:none}
+            .editor{box-shadow:none;border:none}
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Toolbar -->
+    <div class="toolbar" id="toolbar">
+        <select id="fontSize" title="字号">
+            <option value="3">小</option><option value="4" selected>中</option>
+            <option value="5">大</option><option value="6">特大</option>
+        </select>
+        <span class="sep"></span>
+        <button data-cmd="bold" title="加粗 (Ctrl+B)"><b>B</b></button>
+        <button data-cmd="italic" title="斜体 (Ctrl+I)"><i>I</i></button>
+        <button data-cmd="underline" title="下划线 (Ctrl+U)"><u>U</u></button>
+        <button data-cmd="strikeThrough" title="删除线"><s>S</s></button>
+        <span class="sep"></span>
+        <button data-cmd="justifyLeft" title="左对齐">⫷</button>
+        <button data-cmd="justifyCenter" title="居中">≣</button>
+        <button data-cmd="justifyRight" title="右对齐">⫸</button>
+        <span class="sep"></span>
+        <button data-cmd="insertUnorderedList" title="无序列表">•</button>
+        <button data-cmd="insertOrderedList" title="有序列表">1.</button>
+        <span class="sep"></span>
+        <button data-cmd="removeFormat" title="清除格式">✕</button>
+        <button id="clearAll" title="清空全部" style="color:#e74c3c;">🗑</button>
+    </div>
+
+    <!-- Title -->
+    <input type="text" class="title-input" id="titleInput" placeholder="无标题">
+
+    <!-- Editor -->
+    <div class="editor-wrapper">
+        <div class="editor" id="editor" contenteditable="true"></div>
+        <div class="status-bar">
+            <span id="wordCount">0 字</span>
+            <span class="save-indicator" id="saveIndicator">✓ 已保存</span>
+        </div>
+    </div>
+
+    <!-- QR Code Section -->
+    <div class="qr-section">
+        <h3>📱 扫描二维码访问此页面</h3>
+        <div class="qr-codes">
+            <!-- Public URL QR (primary - works everywhere) -->
+            <div class="qr-card public">
+                <h4>🌍 公网访问</h4>
+                <span class="tag public-tag">任意网络 · 可打印 · 微信可扫</span>
+                <div id="qrPublic" style="width:160px;height:160px;margin:0 auto;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:12px">生成中…</div>
+                <div class="url-box">
+                    公网链接
+                    <code id="publicUrl">检测中…</code>
+                </div>
+                <button class="copy-btn" data-copy="publicUrl">📋 复制链接</button>
+            </div>
+            <!-- LAN QR (fallback - same WiFi only) -->
+            <div class="qr-card">
+                <h4>🏠 局域网访问</h4>
+                <span class="tag local-tag">同一 WiFi 下更快</span>
+                <div id="qrLocal" style="width:160px;height:160px;margin:0 auto;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:12px">生成中…</div>
+                <div class="url-box">
+                    局域网链接
+                    <code id="localUrl">检测中…</code>
+                </div>
+                <button class="copy-btn" data-copy="localUrl">📋 复制链接</button>
+            </div>
+        </div>
+        <div class="qr-note" id="qrNote">
+            💡 <strong>打印提示</strong>：如需将二维码打印到纸上，请使用左侧<strong>「公网访问」</strong>的二维码。只要电脑上的服务器和隧道保持运行，任何人任何网络扫一扫都能打开。
+        </div>
+    </div>
+</div>
+
+<!-- QRCode.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+        crossorigin="anonymous"
+        onerror="console.warn('QRCode.js CDN failed, will use fallback')">
+</script>
+
+<script>
+(function(){
+'use strict';
+
+// ========== Configuration ==========
+// PUBLIC_URL: Set this to your public tunnel/hosting URL
+// The page will auto-detect the public URL from a ?public= parameter or use this default.
+var CONFIGURED_PUBLIC_URL = 'https://sunny-commissioner-joyce-slow.trycloudflare.com/editable-page.html';
+var PORT = window.location.port || '8080';
+var PATH = '/editable-page.html';
+
+// ========== LAN IP Detection ==========
+function detectLanIP() {
+    return new Promise(function(resolve) {
+        var candidates = [];
+        var pc;
+        try {
+            pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        } catch(e) { resolve(null); return; }
+        pc.createDataChannel('');
+        pc.createOffer().then(function(o) { pc.setLocalDescription(o); }).catch(function(){});
+        pc.onicecandidate = function(e) {
+            if (e && e.candidate && e.candidate.candidate) {
+                var m = /([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/.exec(e.candidate.candidate);
+                if (m && m[1] !== '0.0.0.0') candidates.push(m[1]);
+            } else {
+                try { pc.close(); } catch(e2) {}
+                var best = null;
+                candidates.forEach(function(ip) {
+                    if (/^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[01])\./.test(ip)) best = best || ip;
+                });
+                resolve(best || candidates[0] || null);
+            }
+        };
+        setTimeout(function() {
+            try { pc.close(); } catch(e2) {}
+            if (candidates.length === 0) resolve(null);
+        }, 3000);
+    });
+}
+
+// ========== Build URLs ==========
+function buildLanURL(lanIP) {
+    if (lanIP) return 'http://' + lanIP + ':' + PORT + PATH;
+    var host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') return null;
+    return window.location.protocol + '//' + host + ':' + PORT + PATH;
+}
+
+function getPublicURL() {
+    // 1. Check ?public= URL parameter
+    var params = new URLSearchParams(window.location.search);
+    var fromParam = params.get('public');
+    if (fromParam) return fromParam;
+
+    // 2. Check configured public URL
+    if (CONFIGURED_PUBLIC_URL) return CONFIGURED_PUBLIC_URL;
+
+    // 3. If we're already on a public URL (trycloudflare, ngrok, etc.), use it
+    var host = window.location.hostname;
+    if (host.indexOf('trycloudflare.com') !== -1 ||
+        host.indexOf('ngrok') !== -1 ||
+        host.indexOf('serveo') !== -1 ||
+        host.indexOf('localhost.run') !== -1 ||
+        host.indexOf('lhr.life') !== -1) {
+        return window.location.href;
+    }
+
+    return null;
+}
+
+// ========== QR Code Generation ==========
+function renderQR(element, text, size) {
+    size = size || 160;
+    element.innerHTML = '';
+
+    // Method 1: qrcodejs library
+    if (typeof QRCode !== 'undefined') {
+        try {
+            // The library creates an img inside the element
+            new QRCode(element, {
+                text: text,
+                width: size,
+                height: size,
+                colorDark: '#2c2c2c',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            // Style the generated img
+            var img = element.querySelector('img');
+            if (img) {
+                img.style.display = 'block';
+                img.style.width = size + 'px';
+                img.style.height = size + 'px';
+                img.style.margin = '0 auto';
+            }
+            return;
+        } catch(e) { console.warn('QRCode.js error:', e); }
+    }
+
+    // Method 2: Google Charts API
+    var img = document.createElement('img');
+    img.src = 'https://chart.googleapis.com/chart?chs=' + (size*2) + 'x' + (size*2)
+        + '&cht=qr&chl=' + encodeURIComponent(text) + '&choe=UTF-8&chld=M|0';
+    img.width = size; img.height = size;
+    img.style.display = 'block'; img.style.margin = '0 auto';
+    img.onerror = function() {
+        // Method 3: qrserver API
+        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + (size*2) + 'x' + (size*2)
+            + '&data=' + encodeURIComponent(text);
+    };
+    element.appendChild(img);
+}
+
+// ========== Main Initialization ==========
+async function init() {
+    var lanIP = await detectLanIP();
+    var lanURL = buildLanURL(lanIP);
+    var publicURL = getPublicURL();
+
+    // LAN URL display
+    var localUrlEl = document.getElementById('localUrl');
+    if (lanURL) {
+        localUrlEl.textContent = lanURL;
+        renderQR(document.getElementById('qrLocal'), lanURL);
+    } else {
+        localUrlEl.textContent = '未能检测到局域网 IP';
+        document.getElementById('qrLocal').innerHTML = '<span style="color:#ccc;font-size:12px">需要连接 WiFi</span>';
+    }
+
+    // Public URL display
+    var publicUrlEl = document.getElementById('publicUrl');
+    if (publicURL) {
+        publicUrlEl.textContent = publicURL;
+        renderQR(document.getElementById('qrPublic'), publicURL);
+    } else {
+        publicUrlEl.textContent = '请配置公网访问地址';
+        document.getElementById('qrPublic').innerHTML = '<span style="color:#f0ad4e;font-size:12px">需要在 ?public= 参数中设置公网 URL<br>或设置 CONFIGURED_PUBLIC_URL</span>';
+        document.getElementById('qrNote').innerHTML = '⚠️ <strong>公网 URL 未配置</strong>：请启动 Cloudflare 隧道或部署到公网托管服务，然后在页面 URL 后加上 <code>?public=你的公网URL</code>';
+    }
+}
+
+init();
+
+// ========== Copy buttons ==========
+document.querySelectorAll('.copy-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var targetId = this.dataset.copy;
+        var url = document.getElementById(targetId).textContent;
+        var self = this;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function() {
+                self.textContent = '✅ 已复制';
+                setTimeout(function() { self.textContent = '📋 复制链接'; }, 1500);
+            }).catch(function() { fallback(url, self); });
+        } else { fallback(url, self); }
+    });
+});
+
+function fallback(url, btn) {
+    var ta = document.createElement('textarea');
+    ta.value = url; ta.style.cssText = 'position:fixed;left:-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+    btn.textContent = '✅ 已复制';
+    setTimeout(function() { btn.textContent = '📋 复制链接'; }, 1500);
+}
+
+// ========== Auto-save to localStorage ==========
+var editor = document.getElementById('editor');
+var titleInput = document.getElementById('titleInput');
+var wordCount = document.getElementById('wordCount');
+var saveIndicator = document.getElementById('saveIndicator');
+
+function loadSaved() {
+    try {
+        var t = localStorage.getItem('notepad-title');
+        var c = localStorage.getItem('notepad-content');
+        if (t) titleInput.value = t;
+        if (c) editor.innerHTML = c;
+    } catch(e) {}
+}
+
+function save() {
+    try {
+        localStorage.setItem('notepad-title', titleInput.value);
+        localStorage.setItem('notepad-content', editor.innerHTML);
+        saveIndicator.classList.add('show');
+        clearTimeout(saveIndicator._t);
+        saveIndicator._t = setTimeout(function() { saveIndicator.classList.remove('show'); }, 1500);
+    } catch(e) {}
+}
+
+function updateWC() {
+    var text = editor.innerText || '';
+    wordCount.textContent = text.replace(/\s/g, '').length + ' 字';
+}
+
+editor.addEventListener('input', function() { save(); updateWC(); });
+titleInput.addEventListener('input', save);
+loadSaved();
+updateWC();
+
+// ========== Toolbar ==========
+document.getElementById('toolbar').addEventListener('click', function(e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    var cmd = btn.dataset.cmd;
+    if (cmd) { document.execCommand(cmd, false, null); editor.focus(); }
+});
+
+document.getElementById('fontSize').addEventListener('change', function(e) {
+    document.execCommand('fontSize', false, e.target.value);
+    editor.focus();
+});
+
+document.getElementById('clearAll').addEventListener('click', function() {
+    if (confirm('确定要清空全部内容吗？此操作不可撤销。')) {
+        editor.innerHTML = '';
+        titleInput.value = '';
+        save(); updateWC();
+    }
+});
+
+function updateTB() {
+    document.querySelectorAll('[data-cmd]').forEach(function(btn) {
+        btn.classList.toggle('active', document.queryCommandState(btn.dataset.cmd));
+    });
+}
+editor.addEventListener('keyup', updateTB);
+editor.addEventListener('mouseup', updateTB);
+
+// ========== Ctrl+S ==========
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault(); save();
+        saveIndicator.classList.add('show');
+        clearTimeout(saveIndicator._t);
+        saveIndicator._t = setTimeout(function() { saveIndicator.classList.remove('show'); }, 1500);
+    }
+});
+
+// ========== Paste plain text ==========
+editor.addEventListener('paste', function(e) {
+    e.preventDefault();
+    var text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, text);
+});
+
+console.log('📝 可编辑记事本已就绪！');
+console.log('🌍 公网 URL:', getPublicURL());
+})();
+</script>
+</body>
+</html>
