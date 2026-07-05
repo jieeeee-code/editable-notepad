@@ -44,8 +44,10 @@
       position: relative;
       color: #333;
       font-size: calc(32 * var(--rpx));
+      font-family: STKaiti, KaiTi, "Kaiti SC", "Noto Serif CJK SC", serif;
+      letter-spacing: calc(2 * var(--rpx));
       border-bottom: calc(1 * var(--rpx)) solid #f2f2f2;
-      display: none; /* 原页面组件存在；课程展示默认隐藏，保留结构不干扰视觉。 */
+      display: block;
     }
     .v-header .back {
       position: absolute;
@@ -64,6 +66,19 @@
       transform: rotate(45deg);
       top: calc(34 * var(--rpx));
       left: calc(12 * var(--rpx));
+    }
+
+    .demo-note {
+      position: fixed;
+      right: max(calc(16 * var(--rpx)), env(safe-area-inset-right));
+      bottom: max(calc(14 * var(--rpx)), env(safe-area-inset-bottom));
+      z-index: 9999;
+      color: rgba(0, 0, 0, .28);
+      font-size: calc(18 * var(--rpx));
+      line-height: 1.4;
+      letter-spacing: calc(.5 * var(--rpx));
+      pointer-events: none;
+      user-select: none;
     }
 
     .header {
@@ -100,6 +115,7 @@
       margin-top: calc(30 * var(--rpx));
       font-size: calc(20 * var(--rpx));
       color: rgba(0,0,0,.87);
+      position: relative;
     }
     .main .title {
       background: #3e4b83;
@@ -264,6 +280,7 @@
   <div class="h5-page">
     <main class="v-content" data-page="anti-counterfeit">
       <div class="v-header"><span class="back"></span><span>扫码验证</span></div>
+      <div class="demo-note">UI Demo · 非正式页面</div>
 
       <div class="header" data-v-0071bd84>
         <img class="logo" src="logo.png" alt="logo" />
@@ -276,7 +293,7 @@
         <div class="title">查询结果</div>
         <div class="table"><div class="label">文件编号</div><div class="value">202607062327</div></div>
         <div class="table"><div class="label">文件名称</div><div class="value">在编在岗证明</div></div>
-        <div class="table"><div class="label">打印日期</div><div class="value">2026-07-01 11:36:52</div></div>
+        <div class="table"><div class="label">打印日期</div><div class="value">2026-06-25 11:36:52</div></div>
         <div class="table"><div class="label">学生姓名</div><div class="value">余发</div></div>
         <div class="table"><div class="label">学工号</div><div class="value">T07086</div></div>
         <div class="table proof-table"><div class="label">数据核实</div><div class="value"><div class="u-album"><div class="u-album__row"><div class="u-album__row__wrapper" id="proof-trigger"><img class="u-album__img" src="333.jpg" alt="数据核实图片" /></div></div></div></div></div>
